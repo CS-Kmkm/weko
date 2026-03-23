@@ -12,10 +12,91 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
+
+## [v2.0.0]  2026-03-18
+### Added
+- Added support for GakuNin.
+- Added a Secret URL functionality.
+- Added an integration feature with OA Assist.
+- Added a dedicated workspace feature for researchers.
+- Enabled workflow usage for registrations via the SWORDv3 API.
+- Added functions to group and role management through GakuNin mAP integration.
+- Added functionality to record comments during the approval process.
+- Modified the approval screen to display links to items.
+- Added features to import metadata from researchmap and synchronize data to researchmap.
+- Added an option to choose whether to update the author information of linked items when updating the Author Database.
+
+### Changed
+- Updated the item list and journal display screens.
+- Updated the version of Node.js and nginx used in the system.
+- Modified file URLs to allow access via authorization (OAuth 2.0).
+- Renamed the "Reject" button to "Back" on the approval screen.
+- Updated the notation of "Publish Status" on the item detail screen to Japanese.
+- Changed the tabs on the Author DB editing screen from English to Japanese.
+
+### Fixed
+- Resolved issues occurring within the JPCOAR Schema 2.0.
+- Fixed an issue where location information could not be retrieved during JPCOAR schema metadata harvesting.
+- Fixed a registration failure for metadata containing the "Catalog (jpcoar:catalog)" element in JPCOAR Schema 2.0.
+- Modified the author detail popup on the item detail screen to display "Creator Type" and "Name Type" attributes added in JPCOAR Schema 2.0.
+- Changed the "Original Language (dcndl:originalLanguage)" field to a list box instead of a text box in registration and edit screens.
+- Fixed an issue where the "Name Type" attribute became blank when updating linked Author DB data.
+- Fixed an issue where full-text search was unavailable for some items by correcting the PDF indexing process.
+- Fixed character corruption in PDFs when a cover page is attached.
+- Resolved an issue where duplicate file extensions during cover page generation exceeded OS character limits.
+- Removed the 10-item limit for bulk deletions in Administration > Item Management.
+- Fixed a bug where access controls were not reflected in the "Number of Public Items" in the Operations Report.
+- Fixed an issue where unintended keys were registered during bulk registration in Author DB Management.
+- Added the creation date to download filenames in Author DB Management > Bulk Export.
+- Fixed a loading issue for specific item types.
+- Corrected the activity list display in the workflow screen based on user roles.
+- Added an error message popup when clicking links to already deleted items in the workflow screen.
+- Fixed a bug where items with assigned DOIs were deleted during bulk deletion.
+- Fixed an issue where deleting item type fields in metadata management did not remove the corresponding item fields.
+- Resolved an issue preventing metadata export in BIBTEX format.
+- Fixed an issue where items did not appear in "New Arrivals" after registration.
+- Resolved failures in generating custom and standard reports.
+- Fixed a bug where changing item visibility on a community page caused an unintended transition to the top screen.
+- Fixed the "showlist" functionality for various bibliographic info properties.
+- Improved Author Integration to refresh the screen automatically upon completion and handle consecutive integration errors.
+- Fixed an issue where the "Publish Status" was not properly inherited after item updates.
+- Fixed an issue where "Holding Agency Identifier" values were hidden in registration and detail screens.
+- Fixed a security issue where proxy submitters could approve items without proper authorization.
+- Fixed an issue preventing faculty users from editing or deleting their own registered items.
+- Fixed "Show List" and "Hide" settings for the "Bibliographic Information" item type.
+- Removed incorrect options from the Item Type Mapping screen.
+- Fixed an issue where items could become disconnected from indexes if a browser was closed during index deletion.
+- Fixed an issue where items moved to a parent index were deleted if the original child index was subsequently deleted.
+- Enabled CSV file previews on the item detail screen.
+- Fixed an error when updating items with NDL JaLC DOIs via import.
+- Removed unnecessary strings when registering items with "NDL JaLC" via import.
+- Corrected the field label for "Funder Identifier Type" in Funding Information.
+- Fixed TSV exports so that "#ID" fields start with a blank space instead of "None."
+- Fixed harvesting errors in JDCat caused by years with fewer than four digits.
+- Fixed a bug where custom sort settings were not displayed for indices with child indices.
+- Removed "[Currently Unused]" from the PMID option in Related Identifiers.
+- Fixed a bug where content files became inaccessible after specific publication date changes.
+- Removed the mandatory requirement for "Start Page" when editing theses.
+- Fixed an issue where feedback email recipients were not updated after author integration.
+- Fixed an error causing feedback emails to show zero downloads.
+- Fixed a redirection issue after GakuNin RDM or OA Assist login.
+- Corrected the date/month order in import log filenames.
+- Fixed an error on the item detail screen for the "periodical" resource type.
+- Fixed a bug where "static value" settings were cleared during property updates.
+- Performed data corrections following property definition changes.
+- Fixed the 100-item retrieval limit in OAI-PMH harvesting.
+- Fixed missing funderIdentifierTypeURI in OAI-PMH output.
+- Prevented APC (rioxxterms:apc) from being output in OAI-PMH JPCOAR Schema 2.0.
+- Modified JPCOAR Schema 1.0 resource types to be updated to version 2.0 vocabulary at the time of item approval.
+
+## [v1.0.8b] 2025-10-28
+### Changed
+- Updated the library used for extracting text from PDFs for full-text search.
+- Refined the reindexing command to improve system performance.
+
 ## [v1.0.8a] 2025-07-08
 ### Fixed
 - Fixed an issue where the tika library was not included in the Docker image.
-
 
 ## [v1.0.8] 2025-05-20
 ### Changed
