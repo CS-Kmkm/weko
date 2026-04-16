@@ -53,17 +53,23 @@ def itemtype_mapping(ItemTypeID=0):
 @blueprint_api.route('/lastest', methods=['GET'])
 def get_itemtypes():
     """Get List Itemtype."""
-    def convert(item):
+    item_types = []
+    for item in ItemTypes.get_latest(True):
         item_type = item.item_type.first()
-        return {
+        if item_type is None:
+            current_app.logger.warning(
+                'Skipped orphan item type name id=%s name=%s.',
+                item.id,
+                item.name,
+            )
+            continue
+        item_types.append({
             'id': item_type.id,
             'name': item.name,
             'tag': item_type.tag,
             'harvesting_type': item_type.harvesting_type,
             'is_deleted': item_type.is_deleted
-        }
-
-    item_types = list(map(convert, ItemTypes.get_latest(True)))
+        })
     filter_type = request.args.get('type') or None
     if filter_type == 'harvesting_type':
         item_types = [

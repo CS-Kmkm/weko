@@ -690,6 +690,19 @@ def test_itemtypes_get_latest(app, db):
     assert isinstance(item_type_names[1].created,datetime)
     assert isinstance(item_type_names[1].updated,datetime)
 
+
+def test_itemtypes_get_latest_skips_orphan_item_type_name(app, db):
+    ItemTypes.create(name='test')
+
+    orphan_item_type_name = ItemTypeName(name='orphan')
+    with db.session.begin_nested():
+        db.session.add(orphan_item_type_name)
+    db.session.commit()
+
+    item_type_names = ItemTypes.get_latest(True)
+    assert len(item_type_names) == 1
+    assert item_type_names[0].name == "test"
+
 # class ItemTypes(RecordBase):
 #     get_latest_with_item_type(cls, with_deleted=False):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_latest_with_item_type -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

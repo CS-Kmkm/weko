@@ -734,10 +734,10 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypes` instances.
         """
         with db.session.no_autoflush:
-            query = ItemTypeName.query
+            # Only return item type names that still have a backing item_type.
+            query = ItemTypeName.query.join(ItemType)
             if not with_deleted:
-                query = query.join(ItemType).filter(
-                    ItemType.is_deleted.is_(False))
+                query = query.filter(ItemType.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
