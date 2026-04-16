@@ -4117,11 +4117,11 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         creators.extend(_creators)
         author_links.extend(_author_links)
 
-    resource_types = list(set(resource_types))
-    identifiers = list(set(identifiers))
-    titles = list(set(titles))
-    creators = list(set(creators))
-    author_links = list(set(author_links))
+    resource_types = list(set([v for v in resource_types if v]))
+    identifiers = list(set([v for v in identifiers if v]))
+    titles = list(set([v for v in titles if v]))
+    creators = list(set([v for v in creators if v]))
+    author_links = list(set([v for v in author_links if v]))
 
     # 1. Check identifier
     if identifiers:
@@ -4147,6 +4147,10 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
             recid_list = [r[0] for r in result if r[0] not in exclude_ids]
             if recid_list:
                 return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
+
+    if not titles:
+        current_app.logger.debug("No duplicate check title found.")
+        return False, [], []
 
     # 2. Normalize title
     normalized_titles = [
@@ -4182,6 +4186,10 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     if not matched_recids:
         return False, [], []
 
+    if not resource_types:
+        current_app.logger.debug("No duplicate check resource type found.")
+        return False, [], []
+
     # 3. Match resource_type
     escaped_resource_types = [
         resource_type.replace('"', '\\"')
@@ -4212,6 +4220,10 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     matched_recids -= set(exclude_ids)
 
     if not matched_recids:
+        return False, [], []
+
+    if not author_links and not creators:
+        current_app.logger.debug("No duplicate check author found.")
         return False, [], []
 
     # 4. Author check (via author_link or creator name)

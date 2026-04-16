@@ -11430,6 +11430,10 @@ def test_check_duplicate(app, users,db_records3):
         res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"title"}]},True)
         assert res == False
 
+        # subitem_title only
+        res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}]},True)
+        assert res == False
+
         # subitem_title:T  resource_type:T
         res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}],"resourcetype":{"resourcetype":"Resource Type"}},True)
         assert res == False
