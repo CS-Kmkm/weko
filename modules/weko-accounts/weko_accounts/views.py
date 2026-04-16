@@ -162,6 +162,11 @@ def _redirect_method(has_next=False):
             next=request.full_path if has_next else None))
 
 
+def _shib_stack_enabled():
+    """Return whether Shibboleth runtime support is deployed."""
+    return current_app.config.get('WEKO_ACCOUNTS_SHIB_STACK_ENABLED', True)
+
+
 @blueprint.route('/')
 def index():
     """Render a basic view."""
@@ -176,6 +181,8 @@ def shib_auto_login():
 
     :return: next url
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('Shib-Session-ID', None)
@@ -244,6 +251,8 @@ def confirm_user():
 
     :return:
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     try:
         if request.form.get('csrf_random', '') != session['csrf_random']:
             flash('csrf_random', category='error')
@@ -315,6 +324,8 @@ def confirm_user_without_page():
 
     :return:
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     try:
         # get shib_session_id from session
         shib_session_id = request.args.get('Shib-Session-ID', None)
@@ -371,6 +382,8 @@ def shib_login():
 
     :return: confirm user page when relation is empty
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     try:
         shib_session_id = request.args.get('Shib-Session-ID', None)
         session['next'] = request.args.get('next', '/')
@@ -428,6 +441,8 @@ def shib_sp_login():
 
     :return: confirm page when relation is empty
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
     _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
@@ -518,6 +533,8 @@ def shib_stub_login():
 
     :return:
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
     if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
         return abort(403)
@@ -557,6 +574,8 @@ def shib_logout():
 
     :return:
     """
+    if not _shib_stack_enabled():
+        return abort(404)
     user_id = current_user.id
     ShibUser.shib_user_logout()
     UserActivityLogger.info(

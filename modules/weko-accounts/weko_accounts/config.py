@@ -29,6 +29,9 @@ WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = False
 """Enable Shibboleth user login system."""
 
+WEKO_ACCOUNTS_SHIB_STACK_ENABLED = True
+"""Enable the nginx/app stack required for Shibboleth routes."""
+
 WEKO_ACCOUNTS_SHIB_CACHE_PREFIX = 'Shib-Session-'
 """Shibboleth cache prefix info."""
 

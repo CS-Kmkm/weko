@@ -748,6 +748,16 @@ def test_shib_stub_login(client,mocker):
     )
 
 
+def test_shib_routes_stack_disabled(client):
+    current_app.config.update(
+        WEKO_ACCOUNTS_SHIB_STACK_ENABLED=False,
+        WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True
+    )
+    assert client.get(url_for("weko_accounts.shib_stub_login")).status_code == 404
+    assert client.post(url_for("weko_accounts.shib_sp_login"), data={}).status_code == 404
+    current_app.config.update(WEKO_ACCOUNTS_SHIB_STACK_ENABLED=True)
+
+
 #def shib_logout():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_logout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_logout(client, users, mocker):

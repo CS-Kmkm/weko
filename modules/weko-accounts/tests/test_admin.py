@@ -10,6 +10,15 @@ from sqlalchemy.orm.session import object_session
 
 class TestShibSettingView:
 
+    def test_index_stack_disabled(self, app, client, users):
+        with app.app_context():
+            user = User.query.filter_by(email=users[0]['email']).first()
+            login(client=client, user=user)
+            current_app.config["WEKO_ACCOUNTS_SHIB_STACK_ENABLED"] = False
+            res = client.get(url_for("shibboleth.index"))
+            assert res.status_code == 404
+            current_app.config["WEKO_ACCOUNTS_SHIB_STACK_ENABLED"] = True
+
     def test_index_acl_guest(self,client,session_time):
         url = url_for("shibboleth.index",_external=True)
         res = client.get(url)

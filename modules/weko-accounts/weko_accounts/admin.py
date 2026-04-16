@@ -23,7 +23,7 @@
 import sys
 import json
 
-from flask import abort, current_app, flash, request
+from flask import abort, current_app, flash, has_app_context, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
@@ -33,12 +33,27 @@ from weko_accounts.models import ShibbolethUser, db
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
+
+def _shib_stack_enabled():
+    """Return whether Shibboleth runtime support is deployed."""
+    if not has_app_context():
+        return True
+    return current_app.config.get('WEKO_ACCOUNTS_SHIB_STACK_ENABLED', True)
+
+
 class ShibSettingView(BaseView):
     """ShibSettingView."""
+
+    @staticmethod
+    def is_visible():
+        """Hide the Shibboleth admin page when the stack is disabled."""
+        return _shib_stack_enabled()
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Index."""
+        if not _shib_stack_enabled():
+            return abort(404)
         try:
             # Shibbolethログイン可否
             shib_login_enable = AdminSettings.get('shib_login_enable', dict_to_object=False)
