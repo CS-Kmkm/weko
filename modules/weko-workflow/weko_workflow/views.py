@@ -2971,17 +2971,22 @@ def unlocks_activity(activity_id="0"):
 def is_user_locked():
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     cur_locked_val = str(get_cache_data(cache_key)) or str()
+    closed_statuses = [
+        ActivityStatusPolicy.ACTIVITY_CANCEL,
+        ActivityStatusPolicy.ACTIVITY_FORCE_END,
+        ActivityStatusPolicy.ACTIVITY_FINALLY,
+    ]
 
-
+    is_open = False
     if cur_locked_val:
         work_activity = WorkActivity()
         act = work_activity.get_activity_by_id(cur_locked_val)
-        if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_CANCEL,ActivityStatusPolicy.ACTIVITY_FORCE_END,ActivityStatusPolicy.ACTIVITY_FINALLY]:
-            is_open = False
+        if act is None or act.activity_status in closed_statuses:
+            # Cleanup stale user lock to avoid permanent blocking.
+            delete_cache_data(cache_key)
+            cur_locked_val = str()
         else:
             is_open = True
-    else:
-        is_open=False
 
     res = {"is_open": is_open, "activity_id": cur_locked_val or ""}
     return jsonify(res), 200
@@ -3020,11 +3025,24 @@ def user_lock_activity(activity_id="0"):
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     timeout = current_app.permanent_session_lifetime
     cur_locked_val = str(get_cache_data(cache_key)) or str()
+    closed_statuses = [
+        ActivityStatusPolicy.ACTIVITY_CANCEL,
+        ActivityStatusPolicy.ACTIVITY_FORCE_END,
+        ActivityStatusPolicy.ACTIVITY_FINALLY,
+    ]
+    work_activity = WorkActivity()
+
+    # Auto recover from stale lock records (deleted/completed activity).
+    if cur_locked_val:
+        cur_act = work_activity.get_activity_by_id(cur_locked_val)
+        if cur_act is None or cur_act.activity_status in closed_statuses:
+            delete_cache_data(cache_key)
+            cur_locked_val = str()
+
     err = ""
     if cur_locked_val:
         err = _("Opened")
     else:
-        work_activity = WorkActivity()
         act = work_activity.get_activity_by_id(activity_id)
         if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_BEGIN,ActivityStatusPolicy.ACTIVITY_MAKING]:
             update_cache_data(

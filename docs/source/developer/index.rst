@@ -12,6 +12,7 @@ Developer Guide
 
    database.rst
    json.rst
+   workflow_activity_lock.rst
 
 
 Indices and tables

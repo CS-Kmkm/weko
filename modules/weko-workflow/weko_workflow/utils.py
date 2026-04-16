@@ -5119,7 +5119,21 @@ def delete_user_lock_activity_cache(activity_id, data):
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     msg = _("Not unlock")
 
-    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data['is_force']):
+    def _to_bool(value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in ["1", "true", "yes", "on"]
+        if isinstance(value, (int, float)):
+            return value != 0
+        return False
+
+    is_opened = _to_bool(data.get("is_opened"))
+    is_force = _to_bool(data.get("is_force"))
+
+    if cur_locked_val and (
+            (not is_opened) or
+            (cur_locked_val == activity_id and is_force)):
         delete_cache_data(cache_key)
         msg = "User Unlock Success"
     return msg

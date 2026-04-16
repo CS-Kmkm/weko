@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Deprecated
 ### Removed
 ### Fixed
+- Improved workflow activity lock handling to prevent stale user-lock recurrence and to make Force Unlock completion/error handling explicit.
 ### Security
 
 

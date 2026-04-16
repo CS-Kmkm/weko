@@ -5645,6 +5645,25 @@ def test_delete_user_lock_activity_cache(app, client,users):
         assert result == "User Unlock Success"
         assert current_cache.get(cache_key) == None
 
+        # string bool payload: is_opened = "false"
+        current_cache.set(cache_key, activity_id)
+        data = {
+            "is_opened": "false",
+        }
+        result = delete_user_lock_activity_cache(activity_id, data)
+        assert result == "User Unlock Success"
+        assert current_cache.get(cache_key) == None
+
+        # string bool payload: is_force = "true"
+        current_cache.set(cache_key, activity_id)
+        data = {
+            "is_opened": "true",
+            "is_force": "true",
+        }
+        result = delete_user_lock_activity_cache(activity_id, data)
+        assert result == "User Unlock Success"
+        assert current_cache.get(cache_key) == None
+
         current_cache.delete(cache_key)
 
 

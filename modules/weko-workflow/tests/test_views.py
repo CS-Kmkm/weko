@@ -3697,6 +3697,18 @@ def test_is_user_locked(client,db_register_full_action, users):
     current_cache.delete("workflow_userlock_activity_5")
 
 
+def test_is_user_locked_stale_cache_cleanup(client, db_register_full_action, users):
+    login(client=client, email=users[2]['email'])
+    cache_key = "workflow_userlock_activity_5"
+    current_cache.set(cache_key, "A-99999999-00001")
+    url = url_for('weko_workflow.is_user_locked')
+
+    res = client.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"is_open": False, "activity_id": ""}
+    assert current_cache.get(cache_key) == None
+
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_user_lock_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_user_lock_activity_nologin(client,db_register2):
     url = url_for('weko_workflow.user_lock_activity', activity_id='1',_external=False)
@@ -3735,6 +3747,21 @@ def test_user_lock_activity(client,db_register2, users, mocker):
     assert current_cache.get("workflow_userlock_activity_5") == "1"
 
     current_cache.delete("workflow_userlock_activity_5")
+
+
+def test_user_lock_activity_stale_cache_cleanup(client, db_register2, users, mocker):
+    login(client=client, email=users[2]['email'])
+    cache_key = "workflow_userlock_activity_5"
+    current_cache.set(cache_key, "A-99999999-00001")
+    mocker.patch("weko_workflow.views.validate_csrf_header")
+    url = url_for('weko_workflow.user_lock_activity', activity_id='1')
+
+    res = client.post(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg": "Success", "err": "", "activity_id": ""}
+    assert current_cache.get(cache_key) == "1"
+
+    current_cache.delete(cache_key)
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_user_lock_activity_empty_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('activity_status, status_code', [
@@ -3826,6 +3853,14 @@ def test_user_unlock_activity(client,users,db_register2,mocker):
     res = client.post(url,data=data)
     assert res.status_code == 200
     assert json.loads(res.data) == {"code": 200, "msg": "Not unlock"}
+    assert current_cache.get("workflow_userlock_activity_5") == None
+
+    # string bool + force unlock
+    current_cache.set("workflow_userlock_activity_5", "1")
+    data = json.dumps({"is_opened": "true", "is_force": "true"})
+    res = client.post(url, data=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg": "User Unlock Success"}
     assert current_cache.get("workflow_userlock_activity_5") == None
 
 def test_lock_activity_nologin(client,db_register2):

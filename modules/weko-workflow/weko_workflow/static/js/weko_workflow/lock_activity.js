@@ -6,6 +6,13 @@ $(document).ready(function () {
 
   var guestEmail = $('#current_guest_email').val();
 
+  var get_error_msg = function (jqXHR) {
+    if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+      return jqXHR.responseJSON.msg;
+    }
+    return 'Server error';
+  };
+
   var unlocks_activity = function (activity_id, locked_value, is_opened, is_force = false) {
     if (guestEmail){
       return ;
@@ -29,46 +36,68 @@ $(document).ready(function () {
     sessionStorage.removeItem('is_opened');
   };
 
-  var unlock_activity = function (activity_id, locked_value) {
+  var unlock_activity = function (activity_id, locked_value, on_done) {
     if (guestEmail) {
       return;
     }
     var url = '/workflow/activity/unlock/' + activity_id;
-    var data = JSON.stringify({
+    var data = {
       locked_value: locked_value
+    };
+
+    $.ajax({
+      type: 'POST',
+      cache: false,
+      contentType: 'application/json',
+      url: url,
+      data: JSON.stringify(data),
+      success: function () {
+        if (typeof on_done === 'function') {
+          on_done(true);
+        }
+      },
+      error: function (jqXHR) {
+        if (typeof on_done === 'function') {
+          on_done(false, jqXHR);
+        }
+      },
+      complete: function () {
+        sessionStorage.removeItem('locked_value');
+      }
     });
-
-    var is_ie = /*@cc_on!@*/false || !!document.documentMode;
-    if (is_ie) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", url, false);
-      xhr.send(data);
-    } else {
-      navigator.sendBeacon(url, data);
-    }
-
-    sessionStorage.removeItem('locked_value');
   };
 
-  var user_unlock_activity = function (activity_id, is_opened, is_force = false) {
+  var user_unlock_activity = function (activity_id, is_opened, is_force = false, on_done) {
     if (guestEmail) {
       return;
     }
     var url = '/workflow/activity/user_unlock/' + activity_id;
 
-    var data = JSON.stringify({
+    var data = {
       is_opened: is_opened,
       is_force: is_force
-    })
-    var is_ie = /*@cc_on!@*/false || !!document.documentMode;
-    if (is_ie) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", url, false)
-      xhr.send(data)
-    } else {
-      navigator.sendBeacon(url, data)
-    }
-    sessionStorage.removeItem('is_opened');
+    };
+
+    $.ajax({
+      type: 'POST',
+      cache: false,
+      contentType: 'application/json',
+      url: url,
+      data: JSON.stringify(data),
+      success: function () {
+        if (typeof on_done === 'function') {
+          on_done(true);
+        }
+      },
+      error: function (jqXHR) {
+        if (typeof on_done === 'function') {
+          on_done(false, jqXHR);
+        }
+      },
+      complete: function () {
+        sessionStorage.removeItem('is_opened');
+      }
+    });
   }
 
   var current_user_email = $('input#current_user_email').val();
@@ -109,13 +138,18 @@ $(document).ready(function () {
           $('#user_locked_msg').html(msg);
           if (result.activity_id === activity_id){
             $('#user_locked_btn').show();
-            $('#user_locked_btn').on('click', function(){
+            $('#user_locked_btn').off('click').on('click', function(){
               $("#action_unlock_activity").modal("show");
               $("#user_lock_modal").css('display','block');
-              $('#btn_unlock').on('click', function () {
+              $('#btn_unlock').off('click').on('click', function () {
                 $("#action_unlock_activity").modal("hide");
-                user_unlock_activity(activity_id, is_opened, is_force=true);
-                location.reload();
+                user_unlock_activity(activity_id, is_opened, true, function (success, jqXHR) {
+                  if (success) {
+                    location.reload();
+                  } else {
+                    alert(get_error_msg(jqXHR));
+                  }
+                });
               });
             });
           }
@@ -155,10 +189,15 @@ $(document).ready(function () {
             $("#action_unlock_activity").modal("show");
             $("#lock_modal").css('display','block');
             // handle popup unlock
-            $('#btn_unlock').on('click', function () {
+            $('#btn_unlock').off('click').on('click', function () {
               $("#action_unlock_activity").modal("hide");
-              unlock_activity(activity_id, result.locked_value);
-              location.reload();
+              unlock_activity(activity_id, result.locked_value, function (success, jqXHR) {
+                if (success) {
+                  location.reload();
+                } else {
+                  alert(get_error_msg(jqXHR));
+                }
+              });
             });
           }
         } else {
