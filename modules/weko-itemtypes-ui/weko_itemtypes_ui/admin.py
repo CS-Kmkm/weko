@@ -22,6 +22,7 @@
 
 import sys
 import io
+import json as std_json
 import traceback
 
 from flask import (
@@ -63,6 +64,84 @@ from .utils import (
     has_system_admin_access, remove_xsd_prefix,
     update_required_schema_not_exist_in_form, update_text_and_textarea
 )
+
+
+def _sanitize_invalid_json_escapes(json_text):
+    """Escape invalid backslash sequences in JSON string literals.
+
+    This keeps valid JSON escapes untouched and only rewrites broken ones,
+    e.g. "\\X" -> "\\\\X".
+    """
+    valid_escapes = {'"', '\\', '/', 'b', 'f', 'n', 'r', 't'}
+    hex_chars = set('0123456789abcdefABCDEF')
+
+    result = []
+    in_string = False
+    idx = 0
+
+    while idx < len(json_text):
+        ch = json_text[idx]
+
+        if not in_string:
+            result.append(ch)
+            if ch == '"':
+                in_string = True
+            idx += 1
+            continue
+
+        if ch == '"':
+            result.append(ch)
+            in_string = False
+            idx += 1
+            continue
+
+        if ch != '\\':
+            result.append(ch)
+            idx += 1
+            continue
+
+        if idx + 1 >= len(json_text):
+            result.append('\\\\')
+            idx += 1
+            continue
+
+        esc_char = json_text[idx + 1]
+        if esc_char in valid_escapes:
+            result.append('\\')
+            result.append(esc_char)
+            idx += 2
+            continue
+
+        if esc_char == 'u':
+            unicode_hex = json_text[idx + 2:idx + 6]
+            if len(unicode_hex) == 4 and all(c in hex_chars for c in unicode_hex):
+                result.append('\\u')
+                result.append(unicode_hex)
+                idx += 6
+                continue
+
+        # Keep the following character as-is and escape only the backslash.
+        result.append('\\\\')
+        idx += 1
+
+    return ''.join(result)
+
+
+def _load_import_json_with_fallback(json_text, file_name):
+    """Load JSON and retry once with invalid escape sanitization."""
+    try:
+        return std_json.loads(json_text)
+    except Exception:
+        sanitized = _sanitize_invalid_json_escapes(json_text)
+        if sanitized == json_text:
+            raise
+
+        current_app.logger.warning(
+            'Detected invalid JSON escape sequence in %s. '
+            'Retrying import with sanitized input.',
+            file_name
+        )
+        return std_json.loads(sanitized)
 
 class ItemTypeMetaDataView(BaseView):
     """ItemTypeMetaDataView."""
@@ -541,7 +620,11 @@ class ItemTypeMetaDataView(BaseView):
                         current_app.logger.debug(file_name + ' is ignored.')
                     else:
                         with import_zip.open(file_name, 'r') as json_file:
-                            json_obj = json.load(json_file)
+                            json_text = json_file.read().decode('utf-8')
+                            json_obj = _load_import_json_with_fallback(
+                                json_text,
+                                file_name
+                            )
                             if file_name == 'ItemType.json':
                                 import_data['ItemType'] = json_obj
                             elif file_name == 'ItemTypeName.json':

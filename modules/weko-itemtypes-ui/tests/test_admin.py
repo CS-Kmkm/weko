@@ -736,6 +736,49 @@ class TestItemTypeMetaDataView:
             {'filename': {'items': ['test_file']}}
         )
 
+        # Import succeeds even when JSON has invalid backslash escapes
+        # (e.g. "D:\ItemType_export(3).zip" stored as "D:\ItemType..." in JSON)
+        with patch(
+            'weko_itemtypes_ui.admin.ItemTypeProps.get_record'
+        ) as mock_get_record:
+            with patch.dict(
+                current_app.config,
+                {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True}
+            ):
+                class MockProp:
+                    updated = datetime(2024, 9, 6, 0, 0)
+
+                mock_get_record.return_value = MockProp()
+
+                file = BytesIO(zip_file.getvalue())
+                broken_escape_zip = BytesIO()
+                file_contents = {}
+                with ZipFile(file, 'r') as zip_in:
+                    for file_name in zip_in.namelist():
+                        with zip_in.open(file_name) as f:
+                            content = f.read().decode('utf-8')
+                            file_contents[file_name] = json.loads(content)
+                file_contents['ItemTypeName.json']['name'] = (
+                    r'D:\ItemType_export(3).zip'
+                )
+
+                with ZipFile(broken_escape_zip, 'w', ZIP_DEFLATED) as zip_out:
+                    for file_name, content in file_contents.items():
+                        content_text = json.dumps(content)
+                        if file_name == 'ItemTypeName.json':
+                            content_text = content_text.replace('\\\\', '\\')
+                        zip_out.writestr(file_name, content_text)
+                broken_escape_zip.seek(0)
+
+                data = {
+                    'item_type_name': 'success test with invalid escape',
+                    'file': (broken_escape_zip, 'test.zip')
+                }
+                res = client.post(url, data=data, content_type='multipart/form-data')
+                assert json.loads(res.data)['msg'] == (
+                    'The item type imported successfully.'
+                )
+
         # Import fails if forced-import is False and
         # item type has unknown properties
         with patch.dict(
