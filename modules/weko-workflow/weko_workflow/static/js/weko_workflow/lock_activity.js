@@ -67,7 +67,7 @@ $(document).ready(function () {
     });
   };
 
-  var user_unlock_activity = function (activity_id, is_opened, is_force = false, on_done) {
+  var user_unlock_activity = function (activity_id, is_opened, is_force = false, force_activity_id = '', on_done) {
     if (guestEmail) {
       return;
     }
@@ -75,7 +75,8 @@ $(document).ready(function () {
 
     var data = {
       is_opened: is_opened,
-      is_force: is_force
+      is_force: is_force,
+      force_activity_id: force_activity_id
     };
 
     $.ajax({
@@ -127,7 +128,7 @@ $(document).ready(function () {
           $('#step_page').hide();
           $('#activity_locked').show();
           $('#user_locked').show();
-          $('#user_locked_btn').hide();
+          $('#user_locked_btn').show();
           var msg = $('#user_locked_msg').text();
           if (result.activity_id) {
             msg = msg.replace('{}', result.activity_id);
@@ -136,23 +137,20 @@ $(document).ready(function () {
             msg = msg.replace('（{}）', '');
           }
           $('#user_locked_msg').html(msg);
-          if (result.activity_id === activity_id){
-            $('#user_locked_btn').show();
-            $('#user_locked_btn').off('click').on('click', function(){
-              $("#action_unlock_activity").modal("show");
-              $("#user_lock_modal").css('display','block');
-              $('#btn_unlock').off('click').on('click', function () {
-                $("#action_unlock_activity").modal("hide");
-                user_unlock_activity(activity_id, is_opened, true, function (success, jqXHR) {
-                  if (success) {
-                    location.reload();
-                  } else {
-                    alert(get_error_msg(jqXHR));
-                  }
-                });
+          $('#user_locked_btn').off('click').on('click', function(){
+            $("#action_unlock_activity").modal("show");
+            $("#user_lock_modal").css('display','block');
+            $('#btn_unlock').off('click').on('click', function () {
+              $("#action_unlock_activity").modal("hide");
+              user_unlock_activity(activity_id, is_opened, true, result.activity_id, function (success, jqXHR) {
+                if (success) {
+                  location.reload();
+                } else {
+                  alert(get_error_msg(jqXHR));
+                }
               });
             });
-          }
+          });
           is_opened=true;
           sessionStorage.setItem('is_opened', is_opened);
         } else {

@@ -5130,10 +5130,11 @@ def delete_user_lock_activity_cache(activity_id, data):
 
     is_opened = _to_bool(data.get("is_opened"))
     is_force = _to_bool(data.get("is_force"))
+    force_activity_id = str(data.get("force_activity_id") or activity_id)
 
     if cur_locked_val and (
             (not is_opened) or
-            (cur_locked_val == activity_id and is_force)):
+            (cur_locked_val == force_activity_id and is_force)):
         delete_cache_data(cache_key)
         msg = "User Unlock Success"
     return msg

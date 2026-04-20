@@ -3863,6 +3863,18 @@ def test_user_unlock_activity(client,users,db_register2,mocker):
     assert json.loads(res.data) == {"code": 200, "msg": "User Unlock Success"}
     assert current_cache.get("workflow_userlock_activity_5") == None
 
+    # force unlock for a different activity id than the current page target
+    current_cache.set("workflow_userlock_activity_5", "A-20260420-00001")
+    data = json.dumps({
+        "is_opened": "true",
+        "is_force": "true",
+        "force_activity_id": "A-20260420-00001"
+    })
+    res = client.post(url, data=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg": "User Unlock Success"}
+    assert current_cache.get("workflow_userlock_activity_5") == None
+
 def test_lock_activity_nologin(client,db_register2):
     """Test of lock activity."""
     url = url_for('weko_workflow.lock_activity', activity_id='1')
