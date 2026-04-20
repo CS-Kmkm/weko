@@ -541,12 +541,7 @@ def check_tsv_import_items(
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
-                    info.filename = info.orig_filename
-                    inf = chardet.detect(info.orig_filename)
-                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
-                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                        if os.sep != "/" and os.sep in info.filename:
-                            info.filename = info.filename.replace(os.sep, "/")
+                    normalize_zip_info_filename(info)
                 except Exception:
                     traceback.print_exc(file=sys.stdout)
                 z.extract(info, path=data_path)
@@ -602,6 +597,7 @@ def check_tsv_import_items(
             handle_check_doi(list_record)
         result["list_record"] = list_record
     except Exception as ex:
+        db.session.rollback()
         error = _("Internal server error")
         if isinstance(ex, zipfile.BadZipFile):
             error = _(
@@ -675,9 +671,7 @@ def check_xml_import_items(
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
+                    normalize_zip_info_filename(info)
                 except Exception:
                     traceback.print_exc(file=sys.stdout)
                 z.extract(info, path=data_path)
@@ -887,12 +881,7 @@ def check_jsonld_import_items(
         with zipfile.ZipFile(file) as zip_ref:
             for info in zip_ref.infolist():
                 try:
-                    info.filename = info.orig_filename
-                    inf = chardet.detect(info.orig_filename)
-                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
-                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                        if os.sep != "/" and os.sep in info.filename:
-                            info.filename = info.filename.replace(os.sep, "/")
+                    normalize_zip_info_filename(info)
                 except Exception:
                     traceback.print_exc()
             zip_ref.extractall(path=data_path)
@@ -1187,6 +1176,24 @@ def getEncode(filepath):
         b = fr.read()
     enc = chardet.detect(b)
     return enc.get('encoding', 'utf-8-sig')
+
+
+def normalize_zip_info_filename(info):
+    """Normalize zip member filename for extraction."""
+    filename = info.orig_filename
+    if isinstance(filename, bytes):
+        try:
+            filename = filename.decode("cp932")
+        except UnicodeDecodeError:
+            filename = filename.decode("utf-8", "replace")
+    else:
+        try:
+            filename = filename.encode("cp437").decode("cp932")
+        except UnicodeError:
+            filename = info.orig_filename
+    if os.sep != "/" and os.sep in filename:
+        filename = filename.replace(os.sep, "/")
+    info.filename = filename
 
 
 def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
