@@ -304,7 +304,7 @@ services:
       - -c
       - temp_buffers=8MB
       - -c
-      - max_connections=40
+      - max_connections=20
       - -c
       - effective_cache_size=512MB
 #    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
