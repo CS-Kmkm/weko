@@ -1271,20 +1271,29 @@ def test_workactivity_notify_about_activity(app, db_register_full_action, mocker
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_early_return -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_workactivity_notify_about_activity_early_return(app, db, db_register_full_action, mocker):
     activity = WorkActivity()
-
-    # with WEKO_NOTIFICATIONS is False
-    app.config["WEKO_NOTIFICATIONS"] = False
     activity1 = db_register_full_action["activities"][0]
-    mock_get_activity_by_id = mocker.patch.object(activity, "get_activity_by_id")
+
+    # with WEKO_NOTIFICATIONS is False, inbox notifications are skipped
+    # but email notifications still run.
+    app.config["WEKO_NOTIFICATIONS"] = False
+    mock_get_activity_by_id = mocker.patch.object(
+        activity, "get_activity_by_id", return_value=activity1
+    )
+    mock_notify = mocker.patch.object(activity, "_notify_about_activity_wiht_case")
+    mock_mail = mocker.patch.object(activity, "send_mail_item_registered")
     assert activity.notify_about_activity(activity1.activity_id, 'registered') == None
-    mock_get_activity_by_id.assert_not_called()
+    mock_get_activity_by_id.assert_called_once_with(activity1.activity_id)
+    mock_notify.assert_not_called()
+    mock_mail.assert_called_once_with(activity1)
 
     # with restricted workflow
     app.config["WEKO_NOTIFICATIONS"] = True
     activity1.workflow.open_restricted = True
-    mock_notify = mocker.patch.object(activity, "_notify_about_activity_wiht_case")
-    mock_mail = mocker.patch.object(activity, "send_mail_item_registered")
+    mock_get_activity_by_id.reset_mock()
+    mock_notify.reset_mock()
+    mock_mail.reset_mock()
     assert activity.notify_about_activity(activity1.activity_id, 'registered') == None
+    mock_get_activity_by_id.assert_called_once_with(activity1.activity_id)
     mock_notify.assert_not_called()
     mock_mail.assert_not_called()
 

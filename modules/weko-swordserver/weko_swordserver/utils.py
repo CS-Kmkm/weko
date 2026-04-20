@@ -553,21 +553,21 @@ def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
         record (WekoRecord, optional): WekoRecord instance. Defaults to None.
         shared_ids (list, optional): Contributor IDs. Defaults to an empty list.
     """
-    if not current_app.config.get("WEKO_NOTIFICATIONS"):
-        return
+    notifications_enabled = current_app.config.get("WEKO_NOTIFICATIONS")
 
     if not record:
         record = WekoRecord.get_record_by_pid(recid)
 
     if case in ["import", "update"]:
-        notify_item_imported(
-            user_id, recid, user_id, record["item_title"], shared_ids
-        )
+        if notifications_enabled:
+            notify_item_imported(
+                user_id, recid, user_id, record["item_title"], shared_ids
+            )
         send_mail_direct_registered(recid, record, user_id, shared_ids)
 
     if case == "delete":
-        notify_item_deleted(
-            user_id, recid, user_id, record["item_title"], shared_ids
-        )
+        if notifications_enabled:
+            notify_item_deleted(
+                user_id, recid, user_id, record["item_title"], shared_ids
+            )
         send_mail_item_deleted(recid, record, user_id, shared_ids)
-        

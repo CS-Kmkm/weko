@@ -3203,59 +3203,66 @@ class WorkActivity(object):
             case (str): Case of notification. <br>
                 `registered`, `request_approval`, `approved` or `rejected`.
         """
-        if not current_app.config["WEKO_NOTIFICATIONS"]:
-            return
+        notifications_enabled = current_app.config["WEKO_NOTIFICATIONS"]
         activity = self.get_activity_by_id(activity_id)
         if activity is None or activity.workflow.open_restricted:
             return
 
         if case == "registered":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_registrant,
-                Notification.create_item_registered
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_registrant,
+                    Notification.create_item_registered
+                )
             self.send_mail_item_registered(activity)
         elif case == "request_approval":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_approver,
-                Notification.create_request_approval
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_approver,
+                    Notification.create_request_approval
+                )
             self.send_mail_request_approval(activity)
         elif case == "approved":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_registrant,
-                Notification.create_item_approved
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_registrant,
+                    Notification.create_item_approved
+                )
             self.send_mail_item_approved(activity)
         elif case == "rejected":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_registrant,
-                Notification.create_item_rejected
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_registrant,
+                    Notification.create_item_rejected
+                )
             self.send_mail_item_rejected(activity)
         elif case == "deleted":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_registrant,
-                Notification.create_item_deleted
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_registrant,
+                    Notification.create_item_deleted
+                )
             self.send_mail_item_deleted(activity)
         elif case == "deletion_request":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_approver,
-                Notification.create_request_delete_approval
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_approver,
+                    Notification.create_request_delete_approval
+                )
             self.send_mail_request_delete_approval(activity)
         elif case == "deletion_approved":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_registrant,
-                Notification.create_item_delete_approved
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_registrant,
+                    Notification.create_item_delete_approved
+                )
             self.send_mail_item_delete_approved(activity)
         elif case == "deletion_rejected":
-            self._notify_about_activity_wiht_case(
-                activity, case, self._get_params_for_registrant,
-                Notification.create_item_delete_rejected
-            )
+            if notifications_enabled:
+                self._notify_about_activity_wiht_case(
+                    activity, case, self._get_params_for_registrant,
+                    Notification.create_item_delete_rejected
+                )
             self.send_mail_item_delete_rejected(activity)
 
     def _get_params_for_registrant(self, activity):

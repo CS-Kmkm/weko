@@ -176,3 +176,16 @@ def test_notifications(app, users, client):
     assert data["message"] == "Notifications retrieved successfully."
     assert data["count"] == 2
     assert data["notifications"] == mock_notifications
+
+
+def test_notifications_disabled(app, users, client):
+    """Notifications API returns 404 when the feature is disabled."""
+    app.config["WEKO_NOTIFICATIONS"] = False
+    login_user_via_session(client=client, email=users[0]["email"])
+
+    response = client.get("/notifications")
+
+    assert response.status_code == 404, json.dumps(response.get_json())
+    data = response.get_json()
+    assert data["code"] == 404
+    assert data["message"] == "Notifications are disabled."

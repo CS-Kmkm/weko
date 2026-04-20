@@ -573,10 +573,20 @@ def test_notify_about_item(app):
     user_id = 1
 
     with patch("weko_swordserver.utils.notify_item_imported") as mock_notify, \
-            patch("weko_swordserver.utils.notify_item_deleted") as mock_notify_deleted:
+            patch("weko_swordserver.utils.notify_item_deleted") as mock_notify_deleted, \
+            patch("weko_swordserver.utils.send_mail_direct_registered") as mock_send_mail:
         notify_about_item("import", recid, user_id, record)
         mock_notify.assert_not_called()
         mock_notify_deleted.assert_not_called()
+        mock_send_mail.assert_called_once_with(recid, record, user_id, [])
+
+    with patch("weko_swordserver.utils.notify_item_imported") as mock_notify, \
+            patch("weko_swordserver.utils.notify_item_deleted") as mock_notify_deleted, \
+            patch("weko_swordserver.utils.send_mail_item_deleted") as mock_send_mail_deleted:
+        notify_about_item("delete", recid, user_id, record, shared_ids=[2, 3])
+        mock_notify.assert_not_called()
+        mock_notify_deleted.assert_not_called()
+        mock_send_mail_deleted.assert_called_once_with(recid, record, user_id, [2, 3])
 
     app.config["WEKO_NOTIFICATIONS"] = True
 

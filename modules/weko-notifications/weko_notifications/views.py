@@ -185,6 +185,12 @@ def notifications_form_factory():
 @blueprint_api.route("/notifications", methods=["GET"])
 def notifications():
     """Retrieve notifications for the current user."""
+    if not current_app.config["WEKO_NOTIFICATIONS"]:
+        return jsonify(
+            code=404,
+            message=_("Notifications are disabled."),
+        ), 404
+
     if not current_user.is_authenticated:
         return jsonify(
             code=401,
