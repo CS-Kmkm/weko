@@ -107,17 +107,24 @@ fi
 
 # load virtualenvrapper:
 # shellcheck source=/dev/null
+if ! "${VIRTUALENVWRAPPER_PYTHON:-python}" -c "import virtualenvwrapper.hook_loader" >/dev/null 2>&1; then
+    export VIRTUALENVWRAPPER_PYTHON="$(command -v python)"
+fi
 source "$(which virtualenvwrapper.sh)"
 
 # switch virtual environment:
 workon "${INVENIO_WEB_VENV}"
+
+run_invenio () {
+    "${HOME}/.virtualenvs/${INVENIO_WEB_VENV}/bin/${INVENIO_WEB_INSTANCE}" "$@"
+}
 
 # quit on errors and unbound symbols:
 set -o errexit
 set -o nounset
 
 # sphinxdoc-start-application-begin
-${INVENIO_WEB_INSTANCE} run -h 0.0.0.0 &
+run_invenio run -h 0.0.0.0 &
 # sphinxdoc-start-application-end
 
 # runs as root or needs sudo?

@@ -92,6 +92,10 @@ combined-pdfs/*
 
 # pyenv
 .python-version
+# local deployment secrets
+.env
+.env.*
+!.env.example
 # celery
 celerybeat-schedule
 celeryd.pid

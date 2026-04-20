@@ -108,12 +108,19 @@ fi
 
 # load virtualenvrapper:
 # shellcheck source=/dev/null
+if ! "${VIRTUALENVWRAPPER_PYTHON:-python}" -c "import virtualenvwrapper.hook_loader" >/dev/null 2>&1; then
+    export VIRTUALENVWRAPPER_PYTHON="$(command -v python)"
+fi
 source "$(which virtualenvwrapper.sh)"
 
 # sphinxdoc-create-virtual-environment-begin
 mkvirtualenv "${INVENIO_WEB_VENV}"
 cdvirtualenv
 # sphinxdoc-create-virtual-environment-end
+
+run_invenio () {
+    "${HOME}/.virtualenvs/${INVENIO_WEB_VENV}/bin/${INVENIO_WEB_INSTANCE}" "$@"
+}
 
 # quit on errors and unbound symbols:
 set -o errexit
@@ -124,8 +131,10 @@ set -o nounset
 mkdir -p "var/instance/"
 mkdir -p "var/instance/data"
 mkdir -p "var/instance/conf"
-pip install "jinja2-cli>=0.6.0"
-jinja2 "/code/scripts/instance.cfg" > "var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg"
+"${HOME}/.virtualenvs/${INVENIO_WEB_VENV}/bin/python" \
+    "/code/scripts/render_instance_cfg.py" \
+    "/code/scripts/instance.cfg" \
+    "var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg"
 ln -s "$(pwd)/var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg" "var/instance/${INVENIO_WEB_INSTANCE}.cfg"
 cp -pf "/code/scripts/uwsgi.ini" "var/instance/conf/"
 cp -pf "/code/modules/weko-theme/weko_theme/static/css/weko_theme/_variables.scss" "var/instance/data/"
@@ -133,7 +142,7 @@ cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/in
 # sphinxdoc-customise-instance-end
 
 # sphinxdoc-run-npm-begin
-${INVENIO_WEB_INSTANCE} npm
+run_invenio npm
 cdvirtualenv "var/instance/static"
 CI=true npm install
 CI=true npm install angular-schema-form@0.8.13
@@ -148,8 +157,8 @@ git clone --branch feature/changePaginationForSearchAfterUse https://github.com/
 # sphinxdoc-run-npm-end
 
 # sphinxdoc-collect-and-build-assets-begin
-${INVENIO_WEB_INSTANCE} collect -v
-${INVENIO_WEB_INSTANCE} assets build
+run_invenio collect -v
+run_invenio assets build
 # sphinxdoc-collect-and-build-assets-end
 
 # gunicorn uwsgi - begin
