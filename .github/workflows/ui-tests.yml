@@ -60,12 +60,12 @@ jobs:
           echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
 
           # Check if we can connect to the service
-          if curl -f -s --insecure https://localhost/ > /dev/null 2>&1; then
+          if curl -f -s --insecure https://localhost:18443/ > /dev/null 2>&1; then
             echo "✓ WEKO is ready! (took ${elapsed}s)"
             exit 0
           else
             # Get HTTP response code for debugging
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost:18443/ 2>/dev/null || echo "connection_failed")
             echo "  ✗ HTTP response: $http_code"
           fi
 
@@ -77,7 +77,7 @@ jobs:
 
         echo ""
         echo "❌ WEKO failed to start within 300 seconds"
-        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
+        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost:18443/ 2>/dev/null || echo "connection_failed")"
         echo ""
         echo "Container status:"
         docker compose -f docker-compose2.yml ps
@@ -95,7 +95,7 @@ jobs:
         mkdir -p reports test-results/videos
         pytest --browser chromium --html=reports/report.html --self-contained-html
       env:
-        WEKO_BASE_URL: https://localhost
+        WEKO_BASE_URL: https://localhost:18443
         WEKO_TEST_EMAIL: wekosoftware@nii.ac.jp
         WEKO_TEST_PASSWORD: uspass123
 

@@ -12,6 +12,7 @@ Developer Guide
 
    database.rst
    json.rst
+   prebuilt_image_bundle.rst
    workflow_activity_lock.rst
 
 
