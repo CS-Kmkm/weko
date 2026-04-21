@@ -85,6 +85,7 @@ services:
       - WEKO_AGGREGATE_EVENT_HOUR=0
       - WEKO_AGGREGATE_EVENT_MINUTE=0
       - WEKO_HANDLE_ALLOW_REGISTER_CRNI=False
+      - WEKO_CREATE_SAMPLE_USERS=${WEKO_CREATE_SAMPLE_USERS:-False}
       - WEKO_RECORDS_UI_SECRET_KEY=${WEKO_RECORDS_UI_SECRET_KEY:?Set WEKO_RECORDS_UI_SECRET_KEY in .env}
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
       - WTF_CSRF_SECRET_KEY=${WTF_CSRF_SECRET_KEY:?Set WTF_CSRF_SECRET_KEY in .env}
@@ -216,6 +217,7 @@ services:
       - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
       - TMPDIR=/var/tmp
       - WEKO_HANDLE_ALLOW_REGISTER_CRNI=False
+      - WEKO_CREATE_SAMPLE_USERS=${WEKO_CREATE_SAMPLE_USERS:-False}
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static

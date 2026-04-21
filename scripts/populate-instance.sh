@@ -112,6 +112,7 @@ fi
 
 RESET_DATABASE=${RESET_DATABASE:-0}
 REBUILD_INDEX=${REBUILD_INDEX:-0}
+WEKO_CREATE_SAMPLE_USERS=${WEKO_CREATE_SAMPLE_USERS:-False}
 
 wait_for_tcp_service () {
     local host=$1
@@ -408,6 +409,7 @@ run_invenio language create \
 #### sphinxdoc-create-language-data-end
 
 ##### sphinxdoc-create-test-data-begin
+if [ "${WEKO_CREATE_SAMPLE_USERS}" = "True" ]; then
 run_invenio users create \
        "repoadmin@example.org" \
        --password "${INVENIO_USER_PASS}" \
@@ -439,6 +441,7 @@ run_invenio users create \
 run_invenio roles add \
         "comadmin@example.org" \
        "${INVENIO_ROLE_COMMUNITY}"
+fi
 
 ##### sphinxdoc-create-test-data-end
 
