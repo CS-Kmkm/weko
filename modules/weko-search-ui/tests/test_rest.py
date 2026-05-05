@@ -11,7 +11,6 @@ from elasticsearch_dsl import response, Search
 from elasticsearch.exceptions import ElasticsearchException
 from tests.conftest import json_data
 
-from invenio_records_rest.errors import MaxResultWindowRESTError
 from invenio_rest import ContentNegotiatedMethodView
 
 from weko_records.api import ItemTypes
@@ -140,13 +139,19 @@ def test_IndexSearchResource_get_Exception(i18n_app, client_rest, db, users, ite
                     rd["links"] = links
                     assert result == rd
 
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_MaxResultWindowRESTError -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest,db_register2):
-    #MaxResultWindowRESTError発生
-    param = {"size":1000,"page":1000}
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_unlimited_result_window -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_get_unlimited_result_window(client_rest, db_register2):
+    def dummy_response(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        return response.Response(Search(), data)
+
+    param = {"size": 1000, "page": 1000}
     with patch("weko_admin.utils.get_facet_search_query", return_value={}):
-        res =  client_rest.get(url("/index/", param))
-        assert res.status_code == 400
+        with patch("weko_search_ui.rest.Indexes.get_self_list", return_value=[]):
+            with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response("data/search/execute_result01_02_03.json")):
+                res = client_rest.get(url("/index/", param))
+                assert res.status_code == 200
 
 # def create_blueprint(app, endpoints):
 def test_create_blueprint(i18n_app, app, users):
@@ -476,9 +481,13 @@ def test_IndexSearchResourceAPI_error(client_rest, db_register2, db_rocrate_mapp
     res = client_rest.get(url('/v0/records'))
     assert res.status_code == 400
 
+    with open('tests/data/rocrate/search_result.json', 'r') as f:
+        search_result = json.load(f)
+
     param = {'size': 1000, 'page': 1000}
-    res = client_rest.get(url('/v1/records', param))
-    assert res.status_code == 400
+    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(search_result)):
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
 
     with patch('invenio_search.api.RecordsSearch.execute', side_effect=ElasticsearchException()):
         res = client_rest.get(url('/v1/records'))

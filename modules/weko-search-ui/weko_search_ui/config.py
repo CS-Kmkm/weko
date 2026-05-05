@@ -249,7 +249,8 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
         search_result_list_route="/<string:version>/records/list",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
-        max_result_window=10000,
+        # 0 disables app-side page*size cap; Elasticsearch-side limits still apply.
+        max_result_window=0,
     ),
 )
 

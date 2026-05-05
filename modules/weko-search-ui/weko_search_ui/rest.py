@@ -74,6 +74,11 @@ from .api import SearchSetting
 from .query import default_search_factory
 
 
+def _has_max_result_window_limit(max_result_window):
+    """Return True when max_result_window is a positive integer limit."""
+    return isinstance(max_result_window, int) and max_result_window > 0
+
+
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
 
@@ -253,7 +258,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 value = request.args.getlist(param)
                 if value:
                     params[param] = value
-        if page * size >= self.max_result_window:
+        if _has_max_result_window_limit(self.max_result_window) and page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
         urlkwargs = dict()
         search_obj = self.search_class()
@@ -296,10 +301,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             links["prev"] = url_for(
                 "weko_search_rest.recid_index", page=page - 1, **urlkwargs
             )
-        if (
-            size * page < search_result.hits.total
-            and size * page < self.max_result_window
-        ):
+        has_next = size * page < search_result.hits.total
+        if _has_max_result_window_limit(self.max_result_window):
+            has_next = has_next and size * page < self.max_result_window
+        if has_next:
             links["next"] = url_for(
                 "weko_search_rest.recid_index", page=page + 1, **urlkwargs
             )
@@ -618,7 +623,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             else:
                 if not page:
                     page = 1
-                if page * size >= self.max_result_window:
+                if _has_max_result_window_limit(self.max_result_window) and page * size >= self.max_result_window:
                     raise MaxResultWindowRESTError()
                 search = search[(page - 1) * size: page * size]
 
